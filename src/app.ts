@@ -27,7 +27,7 @@ export function buildApp(options: AppOptions = {}): FastifyInstance {
   app.register(swagger, {
     openapi: {
       info: {
-        title: 'Keyloop Unified Service Scheduler API',
+        title: 'Unified Service Scheduler API',
         description: 'Production OpenAPI specification with Drizzle ORM and PostgreSQL',
         version: '1.0.0',
       },
@@ -71,7 +71,7 @@ export function buildApp(options: AppOptions = {}): FastifyInstance {
   app.get('/health', async () => ({
     status: 'UP',
     timestamp: new Date().toISOString(),
-    service: 'keyloop-unified-service-scheduler',
+    service: 'unified-service-scheduler',
   }));
 
   return app;

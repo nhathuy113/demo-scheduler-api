@@ -28,7 +28,7 @@ describe('Fastify Swagger & Observability Integration', () => {
     expect(response.statusCode).toBe(200);
     const spec = response.json();
     expect(spec.openapi).toMatch(/^3\./);
-    expect(spec.info.title).toBe('Keyloop Unified Service Scheduler API');
+    expect(spec.info.title).toBe('Unified Service Scheduler API');
 
     await app.close();
   });
@@ -43,7 +43,7 @@ describe('Fastify Swagger & Observability Integration', () => {
     expect(response.statusCode).toBe(200);
     const body = response.json();
     expect(body.status).toBe('UP');
-    expect(body.service).toBe('keyloop-unified-service-scheduler');
+    expect(body.service).toBe('unified-service-scheduler');
 
     await app.close();
   });

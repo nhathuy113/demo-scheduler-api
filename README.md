@@ -1,6 +1,6 @@
 # Unified Service Scheduler API
 
-A resource-constrained service appointment scheduling platform built for Keyloop's Technical Assessment (Scenario A: The Unified Service Scheduler).
+A resource-constrained service appointment scheduling platform (Scenario A: The Unified Service Scheduler).
 
 ## Tech Stack
 - **Runtime:** Node.js (v22 LTS)

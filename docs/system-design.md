@@ -1,6 +1,6 @@
 # 🚗 Unified Service Scheduler — System Design Document (v7)
 
-A resource-constrained service appointment scheduling platform built for Keyloop's Technical Assessment (**Scenario A: The Unified Service Scheduler**, Domain: Ownership).
+A resource-constrained service appointment scheduling platform (**Scenario A: The Unified Service Scheduler**, Domain: Ownership).
 
 ---
 
@@ -147,7 +147,7 @@ flowchart TD
 ### 5.1. PostgreSQL 16 (vs. SQLite / NoSQL)
 - **Distributed Row Locks:** `SELECT ... FOR UPDATE` serializes competing bookings across multi-pod API instances, eliminating SQLite's single-file lock (`BEGIN IMMEDIATE`) bottleneck.
 - **Atomic Dual-Resource Invariant:** Strict ACID transaction guarantees an appointment commits if and only if both bay and certified technician are available; rolls back cleanly on any conflict.
-- **Enterprise DMS Standard:** Native relational schema directly mirrors production dealership management systems (Keyloop, CDK) managing VINs, bays, and labor records.
+- **Enterprise DMS Standard:** Native relational schema directly mirrors production dealership management systems managing VINs, bays, and labor records.
 
 ### 5.2. TypeScript 5 + Node.js 22 LTS
 - **High-Signal Contracts:** Branded types (`DealershipId`, `ServiceBayId`) and tagged union errors (`Result<AllocatedResources, DomainError>`) eliminate silent runtime type coercion.
