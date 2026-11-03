@@ -1,8 +1,13 @@
 import { FastifyInstance, FastifyPluginAsync } from 'fastify';
 import { AvailabilityService } from './availability.service.js';
 import { AvailabilityQuerySchema } from './scheduling.contract.js';
+import { BookingService } from './booking.service.js';
+import { createBookingRouter } from './booking.router.js';
 
-export function createSchedulingRouter(service: AvailabilityService): FastifyPluginAsync {
+export function createSchedulingRouter(
+  service: AvailabilityService,
+  bookingService?: BookingService,
+): FastifyPluginAsync {
   return async function schedulingRoutes(app: FastifyInstance): Promise<void> {
     app.get(
       '/api/v1/availability',
@@ -82,5 +87,9 @@ export function createSchedulingRouter(service: AvailabilityService): FastifyPlu
         return reply.status(200).send(result.data);
       },
     );
+
+    if (bookingService) {
+      await app.register(createBookingRouter(bookingService));
+    }
   };
 }
