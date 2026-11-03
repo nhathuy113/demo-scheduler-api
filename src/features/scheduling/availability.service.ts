@@ -1,4 +1,4 @@
-import { endOfDay, parseISO, startOfDay } from 'date-fns';
+import { parseISO } from 'date-fns';
 import { Result } from '../../shared/result.js';
 import {
   AvailabilityQuery,
@@ -25,9 +25,8 @@ export class AvailabilityService {
       });
     }
 
-    const targetDate = parseISO(query.date);
-    const rangeStart = startOfDay(targetDate);
-    const rangeEnd = endOfDay(targetDate);
+    const rangeStart = parseISO(`${query.date}T00:00:00.000Z`);
+    const rangeEnd = parseISO(`${query.date}T23:59:59.999Z`);
 
     const [bays, technicians, existingBookings] = await Promise.all([
       this.storage.getBays(query.dealershipId),

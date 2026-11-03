@@ -1,13 +1,10 @@
 import {
+  addHours,
   addMinutes,
   areIntervalsOverlapping,
   isAfter,
+  isValid,
   parseISO,
-  setHours,
-  setMilliseconds,
-  setMinutes,
-  setSeconds,
-  startOfDay,
 } from 'date-fns';
 import {
   AvailableSlotResponse,
@@ -37,6 +34,11 @@ export function hasRequiredSkills(
   return requiredSkills.every((skill) => technicianSkills.includes(skill));
 }
 
+/**
+ * @side-effects: none (pure calculation)
+ * @invariants: candidate slots are calculated in UTC; durationMinutes > 0, stepMinutes > 0, startHour < endHour
+ * @gotchas: Host process timezone is ignored by anchoring directly to UTC ISO timestamps (T00:00:00.000Z).
+ */
 export function generateCandidateSlots(
   dateStr: string,
   durationMinutes: number,
@@ -44,9 +46,13 @@ export function generateCandidateSlots(
   startHour: number = 8,
   endHour: number = 18,
 ): TimeSlot[] {
-  const base = startOfDay(parseISO(dateStr));
-  const dayStart = setHours(setMinutes(setSeconds(setMilliseconds(base, 0), 0), 0), startHour);
-  const dayEnd = setHours(setMinutes(setSeconds(setMilliseconds(base, 0), 0), 0), endHour);
+  const base = parseISO(`${dateStr}T00:00:00.000Z`);
+  if (!isValid(base) || durationMinutes <= 0 || stepMinutes <= 0 || startHour >= endHour) {
+    return [];
+  }
+
+  const dayStart = addHours(base, startHour);
+  const dayEnd = addHours(base, endHour);
 
   const slots: TimeSlot[] = [];
   let currentStart = dayStart;

@@ -9,7 +9,6 @@ import {
 import {
   ExistingBooking,
   ServiceBay,
-  ServiceTypeEnum,
   Technician,
 } from '../src/features/scheduling/scheduling.contract.js';
 
@@ -45,13 +44,20 @@ describe('Scheduling Pure Rules', () => {
   });
 
   describe('generateCandidateSlots', () => {
-    it('generates candidate windows between 08:00 and 18:00', () => {
+    it('generates candidate windows between 08:00 and 18:00 UTC', () => {
       const slots = generateCandidateSlots('2026-11-03', 30, 30, 8, 18);
       expect(slots.length).toBe(20);
-      expect(slots[0].startTime.getHours()).toBe(8);
-      expect(slots[0].startTime.getMinutes()).toBe(0);
-      expect(slots[slots.length - 1].endTime.getHours()).toBe(18);
-      expect(slots[slots.length - 1].endTime.getMinutes()).toBe(0);
+      expect(slots[0].startTime.getUTCHours()).toBe(8);
+      expect(slots[0].startTime.getUTCMinutes()).toBe(0);
+      expect(slots[slots.length - 1].endTime.getUTCHours()).toBe(18);
+      expect(slots[slots.length - 1].endTime.getUTCMinutes()).toBe(0);
+    });
+
+    it('defensively returns empty array for invalid inputs without looping indefinitely', () => {
+      expect(generateCandidateSlots('invalid-date', 30)).toEqual([]);
+      expect(generateCandidateSlots('2026-11-03', 0)).toEqual([]);
+      expect(generateCandidateSlots('2026-11-03', 30, -5)).toEqual([]);
+      expect(generateCandidateSlots('2026-11-03', 30, 30, 18, 8)).toEqual([]);
     });
   });
 
