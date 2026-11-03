@@ -1,4 +1,5 @@
-import { and, eq, gt, lt, or } from 'drizzle-orm';
+import { randomUUID } from 'node:crypto';
+import { and, eq, gt, lt, or, sql } from 'drizzle-orm';
 import * as schema from '../../db/schema.js';
 import {
   ConfirmedAppointment,
@@ -79,6 +80,12 @@ export class DrizzleSchedulingStorage implements ISchedulingStorage {
 
   async saveAppointmentAtomic(input: BookAppointmentRecordInput): Promise<Result<ConfirmedAppointment, DomainError>> {
     return this.db.transaction(async (tx) => {
+      // Serialize writers per resource (sorted keys avoid deadlock) so FOR UPDATE sees committed rows.
+      const lockKeys = [`bay:${input.serviceBayId}`, `tech:${input.technicianId}`].sort();
+      for (const key of lockKeys) {
+        await tx.execute(sql`SELECT pg_advisory_xact_lock(hashtext(${key}))`);
+      }
+
       const conflicts = await tx
         .select({ id: schema.appointments.id })
         .from(schema.appointments)
@@ -100,7 +107,7 @@ export class DrizzleSchedulingStorage implements ISchedulingStorage {
         });
       }
 
-      const id = input.appointmentId ?? `APPT-${Date.now()}`;
+      const id = input.appointmentId ?? `APPT-${randomUUID()}`;
       const [inserted] = await tx
         .insert(schema.appointments)
         .values({

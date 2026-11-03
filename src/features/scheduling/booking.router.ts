@@ -1,6 +1,15 @@
 import { FastifyInstance, FastifyPluginAsync } from 'fastify';
-import { BookingRequestSchema } from './scheduling.contract.js';
+import { BookingRequestSchema, DomainError } from './scheduling.contract.js';
 import { BookingService } from './booking.service.js';
+
+const DOMAIN_ERROR_HTTP_STATUS: Record<DomainError['code'], 404 | 409 | 422> = {
+  SERVICE_NOT_FOUND: 404,
+  BAY_UNAVAILABLE: 422,
+  TECHNICIAN_UNAVAILABLE: 422,
+  SKILL_MISMATCH: 422,
+  INVALID_TIME_SLOT: 422,
+  SLOT_ALREADY_BOOKED: 409,
+};
 
 export function createBookingRouter(service: BookingService): FastifyPluginAsync {
   return async function bookingRoutes(app: FastifyInstance): Promise<void> {
@@ -16,7 +25,7 @@ export function createBookingRouter(service: BookingService): FastifyPluginAsync
             properties: {
               customerId: { type: 'string', example: 'CUST-01' },
               dealershipId: { type: 'string', example: 'D01' },
-              vehicleVin: { type: 'string', example: '1HGCR2F83HA000000' },
+              vehicleVin: { type: 'string', pattern: '^[A-HJ-NPR-Z0-9]{17}$', example: '1HGCR2F83HA000000' },
               serviceType: {
                 type: 'string',
                 enum: ['OIL_CHANGE', 'TIRE_ROTATION', 'BRAKE_INSPECTION', 'ENGINE_DIAGNOSTIC', 'BATTERY_EV_SERVICE'],
@@ -49,7 +58,18 @@ export function createBookingRouter(service: BookingService): FastifyPluginAsync
               properties: {
                 code: { type: 'string' },
                 message: { type: 'string' },
-                errors: { type: 'object' },
+                errors: {
+                  type: 'object',
+                  additionalProperties: { type: 'array', items: { type: 'string' } },
+                },
+              },
+            },
+            404: {
+              description: 'Service type not configured',
+              type: 'object',
+              properties: {
+                code: { type: 'string' },
+                message: { type: 'string' },
               },
             },
             409: {
@@ -83,7 +103,7 @@ export function createBookingRouter(service: BookingService): FastifyPluginAsync
 
         const result = await service.bookAppointment(parseResult.data);
         if (!result.success) {
-          const statusCode = result.error.code === 'SKILL_MISMATCH' ? 422 : 409;
+          const statusCode = DOMAIN_ERROR_HTTP_STATUS[result.error.code];
           return reply.status(statusCode).send(result.error);
         }
 

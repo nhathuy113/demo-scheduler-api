@@ -12,7 +12,7 @@ describe('Fastify Application HTTP Endpoints', () => {
 
     expect(response.statusCode).toBe(200);
     const body = JSON.parse(response.payload);
-    expect(body.service).toBe('keyloop-unified-service-scheduler');
+    expect(body.service).toBe('unified-service-scheduler');
     expect(body.timestamp).toBeDefined();
     expect(body.status).toBe('UP');
   });
