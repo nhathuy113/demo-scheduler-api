@@ -55,6 +55,35 @@ export interface AvailableSlotResponse {
   readonly availableTechnicianId: string;
 }
 
+export interface AllocatedBooking {
+  readonly serviceBayId: string;
+  readonly technicianId: string;
+  readonly startTime: Date;
+  readonly endTime: Date;
+}
+
+export interface BookingRequestInput {
+  readonly customerId: string;
+  readonly dealershipId: string;
+  readonly vehicleVin: string;
+  readonly serviceType: ServiceType;
+  readonly requestedStartTime: string;
+}
+
+export interface ConfirmedAppointment {
+  readonly appointmentId: string;
+  readonly dealershipId: string;
+  readonly customerId: string;
+  readonly vehicleVin: string;
+  readonly serviceBayId: string;
+  readonly technicianId: string;
+  readonly serviceType: ServiceType;
+  readonly startTime: string;
+  readonly endTime: string;
+  readonly status: 'CONFIRMED' | 'CANCELLED';
+  readonly createdAt: string;
+}
+
 export const AvailabilityQuerySchema = z.object({
   dealershipId: z.string().min(1, 'Dealership ID is required'),
   serviceType: z.nativeEnum(ServiceTypeEnum, {
@@ -74,7 +103,18 @@ export const AvailabilityQuerySchema = z.object({
 
 export type AvailabilityQuery = z.infer<typeof AvailabilityQuerySchema>;
 
+export const BookingRequestSchema = z.object({
+  customerId: z.string().min(1, 'Customer ID is required'),
+  dealershipId: z.string().min(1, 'Dealership ID is required'),
+  vehicleVin: z.string().regex(/^[A-HJ-NPR-Z0-9]{17}$/, 'Invalid VIN format: 17 uppercase characters excluding I, O, Q'),
+  serviceType: z.nativeEnum(ServiceTypeEnum),
+  requestedStartTime: z.string().datetime(),
+});
+
 export type DomainError =
   | { readonly code: 'SERVICE_NOT_FOUND'; readonly message: string }
   | { readonly code: 'BAY_UNAVAILABLE'; readonly message: string }
-  | { readonly code: 'TECHNICIAN_UNAVAILABLE'; readonly message: string };
+  | { readonly code: 'TECHNICIAN_UNAVAILABLE'; readonly message: string }
+  | { readonly code: 'SKILL_MISMATCH'; readonly message: string }
+  | { readonly code: 'INVALID_TIME_SLOT'; readonly message: string }
+  | { readonly code: 'SLOT_ALREADY_BOOKED'; readonly message: string };

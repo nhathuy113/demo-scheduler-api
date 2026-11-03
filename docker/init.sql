@@ -1,5 +1,5 @@
 -- Unified Service Scheduler Database Schema & Enum Seeds
--- Keyloop Technical Assessment (Scenario A: Ownership)
+-- Technical Assessment (Scenario A: Ownership)
 
 -- 1. Reference / Enum Seed Tables
 CREATE TABLE IF NOT EXISTS skill_codes (
@@ -94,9 +94,9 @@ INSERT INTO service_required_skills (service_type_code, skill_code) VALUES
 ('BATTERY_EV_SERVICE', 'HIGH_VOLTAGE_EV')
 ON CONFLICT (service_type_code, skill_code) DO NOTHING;
 
--- 4. Seed Baseline Keyloop Data
+-- 4. Seed Baseline Dealership Data
 INSERT INTO dealerships (id, name, address)
-VALUES ('D01', 'Keyloop Flagship Dealership', '100 Automotive Blvd, London, UK')
+VALUES ('D01', 'Flagship Dealership', '100 Automotive Blvd, London, UK')
 ON CONFLICT (id) DO NOTHING;
 
 INSERT INTO service_bays (id, dealership_id, name, bay_type, is_active) VALUES

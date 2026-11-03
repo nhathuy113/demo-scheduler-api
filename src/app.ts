@@ -3,6 +3,7 @@ import swaggerUi from '@fastify/swagger-ui';
 import Fastify, { FastifyError, FastifyInstance } from 'fastify';
 import {
   AvailabilityService,
+  BookingService,
   createSchedulingRouter,
   DrizzleDb,
   DrizzleSchedulingStorage,
@@ -27,7 +28,7 @@ export function buildApp(options: AppOptions = {}): FastifyInstance {
   app.register(swagger, {
     openapi: {
       info: {
-        title: 'Keyloop Unified Service Scheduler API',
+        title: 'Unified Service Scheduler API',
         description: 'Production OpenAPI specification with Drizzle ORM and PostgreSQL',
         version: '1.0.0',
       },
@@ -40,7 +41,7 @@ export function buildApp(options: AppOptions = {}): FastifyInstance {
     uiConfig: { docExpansion: 'list', deepLinking: true },
   });
 
-  app.setErrorHandler((error: FastifyError, request, reply) => {
+  app.setErrorHandler((error: FastifyError, _request, reply) => {
     if (error.validation) {
       const fieldErrors: Record<string, string[]> = {};
       for (const issue of error.validation) {
@@ -54,7 +55,7 @@ export function buildApp(options: AppOptions = {}): FastifyInstance {
 
       return reply.status(400).send({
         code: 'VALIDATION_ERROR',
-        message: 'Invalid query parameters for availability search',
+        message: 'Invalid parameters in request payload',
         errors: fieldErrors,
       });
     }
@@ -64,14 +65,15 @@ export function buildApp(options: AppOptions = {}): FastifyInstance {
 
   const storage = options.storage ?? (options.db ? new DrizzleSchedulingStorage(options.db) : undefined);
   if (storage) {
-    const service = new AvailabilityService(storage);
-    app.register(createSchedulingRouter(service));
+    const availabilityService = new AvailabilityService(storage);
+    const bookingService = new BookingService(storage);
+    app.register(createSchedulingRouter(availabilityService, bookingService));
   }
 
   app.get('/health', async () => ({
     status: 'UP',
     timestamp: new Date().toISOString(),
-    service: 'keyloop-unified-service-scheduler',
+    service: 'unified-service-scheduler',
   }));
 
   return app;

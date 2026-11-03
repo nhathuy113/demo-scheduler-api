@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-const DEFAULT_DEV_DATABASE_URL = 'postgresql://postgres:postgres@localhost:5432/scheduler';
+const DEFAULT_DEV_DATABASE_URL = 'postgresql://postgres:postgres@localhost:5433/scheduler';
 
 const EnvSchema = z
   .object({
