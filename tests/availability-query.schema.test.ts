@@ -26,6 +26,16 @@ describe('AvailabilityQuerySchema Contract Verification', () => {
     expect(result.success).toBe(true);
   });
 
+  it('rejects unpadded date like 2026-1-3', () => {
+    const unpaddedDate = {
+      dealershipId: 'D01',
+      date: '2026-1-3',
+      serviceType: ServiceTypeEnum.OIL_CHANGE,
+    };
+    const result = AvailabilityQuerySchema.safeParse(unpaddedDate);
+    expect(result.success).toBe(false);
+  });
+
   it('rejects invalid VIN with forbidden characters (I, O, Q)', () => {
     const invalidVin = {
       dealershipId: 'D01',

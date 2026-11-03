@@ -1,4 +1,4 @@
-import { isMatch } from 'date-fns';
+import { isMatch, isValid, parseISO } from 'date-fns';
 import { z } from 'zod';
 
 export const ServiceTypeEnum = {
@@ -60,9 +60,12 @@ export const AvailabilityQuerySchema = z.object({
   serviceType: z.nativeEnum(ServiceTypeEnum, {
     errorMap: () => ({ message: 'Invalid service type' }),
   }),
-  date: z.string().refine((val) => isMatch(val, 'yyyy-MM-dd'), {
-    message: 'Date must be valid YYYY-MM-DD calendar date',
-  }),
+  date: z
+    .string()
+    .regex(/^\d{4}-\d{2}-\d{2}$/, 'Date must be formatted as YYYY-MM-DD')
+    .refine((val) => isMatch(val, 'yyyy-MM-dd') && isValid(parseISO(`${val}T00:00:00.000Z`)), {
+      message: 'Date must be valid calendar date',
+    }),
   vehicleVin: z
     .string()
     .regex(/^[A-HJ-NPR-Z0-9]{17}$/, 'Invalid VIN format: must be 17 uppercase characters excluding I, O, Q')
