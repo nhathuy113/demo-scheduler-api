@@ -1,13 +1,16 @@
-import { and, eq, gt, lt } from 'drizzle-orm';
+import { and, eq, gt, lt, or } from 'drizzle-orm';
 import * as schema from '../../db/schema.js';
 import {
+  ConfirmedAppointment,
+  DomainError,
   ExistingBooking,
   ServiceBay,
   ServiceConfig,
   ServiceType,
   Technician,
 } from './scheduling.contract.js';
-import { DrizzleDb, ISchedulingStorage } from './scheduling.storage.js';
+import { BookAppointmentRecordInput, DrizzleDb, ISchedulingStorage } from './scheduling.storage.js';
+import { Result } from '../../shared/result.js';
 
 export class DrizzleSchedulingStorage implements ISchedulingStorage {
   constructor(private readonly db: DrizzleDb) {}
@@ -72,5 +75,69 @@ export class DrizzleSchedulingStorage implements ISchedulingStorage {
       durationMinutes: typeRows[0].durationMinutes,
       requiredSkills: skillRows.map((r) => r.skillCode),
     };
+  }
+
+  async saveAppointmentAtomic(input: BookAppointmentRecordInput): Promise<Result<ConfirmedAppointment, DomainError>> {
+    return this.db.transaction(async (tx) => {
+      const conflicts = await tx
+        .select({ id: schema.appointments.id })
+        .from(schema.appointments)
+        .where(
+          and(
+            eq(schema.appointments.dealershipId, input.dealershipId),
+            eq(schema.appointments.status, 'CONFIRMED'),
+            or(eq(schema.appointments.serviceBayId, input.serviceBayId), eq(schema.appointments.technicianId, input.technicianId)),
+            lt(schema.appointments.startTime, input.endTime),
+            gt(schema.appointments.endTime, input.startTime),
+          ),
+        )
+        .for('update');
+
+      if (conflicts.length > 0) {
+        return Result.err({
+          code: 'SLOT_ALREADY_BOOKED',
+          message: 'The requested slot has already been reserved by another client',
+        });
+      }
+
+      const id = input.appointmentId ?? `APPT-${Date.now()}`;
+      const [inserted] = await tx
+        .insert(schema.appointments)
+        .values({
+          id,
+          dealershipId: input.dealershipId,
+          customerId: input.customerId,
+          vehicleVin: input.vehicleVin,
+          serviceBayId: input.serviceBayId,
+          technicianId: input.technicianId,
+          serviceType: input.serviceType,
+          startTime: input.startTime,
+          endTime: input.endTime,
+          status: 'CONFIRMED',
+        })
+        .returning({ createdAt: schema.appointments.createdAt });
+
+      return Result.ok({
+        appointmentId: id,
+        dealershipId: input.dealershipId,
+        customerId: input.customerId,
+        vehicleVin: input.vehicleVin,
+        serviceBayId: input.serviceBayId,
+        technicianId: input.technicianId,
+        serviceType: input.serviceType,
+        startTime: input.startTime.toISOString(),
+        endTime: input.endTime.toISOString(),
+        status: 'CONFIRMED',
+        createdAt: inserted.createdAt.toISOString(),
+      });
+    });
+  }
+
+  async countAppointments(dealershipId: string, startTime: Date): Promise<number> {
+    const rows = await this.db
+      .select({ id: schema.appointments.id })
+      .from(schema.appointments)
+      .where(and(eq(schema.appointments.dealershipId, dealershipId), eq(schema.appointments.startTime, startTime), eq(schema.appointments.status, 'CONFIRMED')));
+    return rows.length;
   }
 }
