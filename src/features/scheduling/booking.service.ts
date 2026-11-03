@@ -30,7 +30,7 @@ export class BookingService {
       this.storage.getBookings(
         request.dealershipId,
         startTime,
-        new Date(startTime.getTime() + 180 * 60 * 1000),
+        endTime,
       ),
     ]);
 

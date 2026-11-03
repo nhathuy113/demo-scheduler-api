@@ -1,3 +1,4 @@
+import { randomUUID } from 'node:crypto';
 import {
   AllocatedBooking,
   BookingRequestInput,
@@ -62,7 +63,7 @@ export function evaluateBooking(
 export function createConfirmedAppointment(
   request: BookingRequestInput,
   allocation: AllocatedBooking,
-  appointmentId: string = `APPT-${Date.now()}`,
+  appointmentId: string = `APPT-${randomUUID()}`,
 ): ConfirmedAppointment {
   return {
     appointmentId,

@@ -106,7 +106,7 @@ export type AvailabilityQuery = z.infer<typeof AvailabilityQuerySchema>;
 export const BookingRequestSchema = z.object({
   customerId: z.string().min(1, 'Customer ID is required'),
   dealershipId: z.string().min(1, 'Dealership ID is required'),
-  vehicleVin: z.string().min(11, 'Invalid VIN format'),
+  vehicleVin: z.string().regex(/^[A-HJ-NPR-Z0-9]{17}$/, 'Invalid VIN format: 17 uppercase characters excluding I, O, Q'),
   serviceType: z.nativeEnum(ServiceTypeEnum),
   requestedStartTime: z.string().datetime(),
 });
