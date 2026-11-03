@@ -3,13 +3,12 @@ import pg from 'pg';
 import * as schema from './schema.js';
 
 export function createDatabaseClient(connectionString?: string) {
-  const pool = new pg.Pool({
-    connectionString:
-      connectionString ||
-      process.env.DATABASE_URL ||
-      'postgres://postgres:postgres@127.0.0.1:5432/scheduler',
-  });
+  const url = connectionString || process.env.DATABASE_URL;
+  if (!url) {
+    throw new Error('DATABASE_URL is required to initialize database client');
+  }
 
+  const pool = new pg.Pool({ connectionString: url });
   const db = drizzle(pool, { schema });
   return { pool, db };
 }

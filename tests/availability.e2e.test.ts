@@ -98,6 +98,44 @@ describe('E2E /api/v1/availability Acceptance Tests', () => {
     expect(response.statusCode).toBe(400);
     const body = JSON.parse(response.payload);
     expect(body.code).toBe('VALIDATION_ERROR');
+    expect(body.errors).toBeDefined();
+    expect(body.errors.date).toBeDefined();
+    await app.close();
+  });
+
+  it('returns 400 Bad Request with VALIDATION_ERROR on missing required querystring parameters', async () => {
+    const storage = createTestStorage();
+    const app = buildApp({ storage });
+    await app.ready();
+
+    const response = await app.inject({
+      method: 'GET',
+      url: '/api/v1/availability?serviceType=OIL_CHANGE&date=2026-11-03',
+    });
+
+    expect(response.statusCode).toBe(400);
+    const body = JSON.parse(response.payload);
+    expect(body.code).toBe('VALIDATION_ERROR');
+    expect(body.errors).toBeDefined();
+    expect(body.errors.dealershipId).toBeDefined();
+    await app.close();
+  });
+
+  it('returns 400 Bad Request with VALIDATION_ERROR on unsupported serviceType enum', async () => {
+    const storage = createTestStorage();
+    const app = buildApp({ storage });
+    await app.ready();
+
+    const response = await app.inject({
+      method: 'GET',
+      url: '/api/v1/availability?dealershipId=D01&serviceType=TURBO_UPGRADE&date=2026-11-03',
+    });
+
+    expect(response.statusCode).toBe(400);
+    const body = JSON.parse(response.payload);
+    expect(body.code).toBe('VALIDATION_ERROR');
+    expect(body.errors).toBeDefined();
+    expect(body.errors.serviceType).toBeDefined();
     await app.close();
   });
 });

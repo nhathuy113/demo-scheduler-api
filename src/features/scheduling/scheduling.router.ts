@@ -20,8 +20,8 @@ export function createSchedulingRouter(service: AvailabilityService): FastifyPlu
                 enum: ['OIL_CHANGE', 'TIRE_ROTATION', 'BRAKE_INSPECTION', 'ENGINE_DIAGNOSTIC', 'BATTERY_EV_SERVICE'],
                 example: 'OIL_CHANGE',
               },
-              date: { type: 'string', example: '2026-11-03' },
-              vehicleVin: { type: 'string', example: '1HGCR2F83HA000000' },
+              date: { type: 'string', pattern: '^\\d{4}-\\d{2}-\\d{2}$', example: '2026-11-03' },
+              vehicleVin: { type: 'string', pattern: '^[A-HJ-NPR-Z0-9]{17}$', example: '1HGCR2F83HA000000' },
             },
           },
           response: {
@@ -44,7 +44,13 @@ export function createSchedulingRouter(service: AvailabilityService): FastifyPlu
               properties: {
                 code: { type: 'string' },
                 message: { type: 'string' },
-                errors: { type: 'object' },
+                errors: {
+                  type: 'object',
+                  additionalProperties: {
+                    type: 'array',
+                    items: { type: 'string' },
+                  },
+                },
               },
             },
             404: {

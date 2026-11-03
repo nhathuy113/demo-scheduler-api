@@ -1,6 +1,6 @@
 import swagger from '@fastify/swagger';
 import swaggerUi from '@fastify/swagger-ui';
-import Fastify, { FastifyInstance } from 'fastify';
+import Fastify, { FastifyError, FastifyInstance } from 'fastify';
 import {
   AvailabilityService,
   createSchedulingRouter,
@@ -38,6 +38,28 @@ export function buildApp(options: AppOptions = {}): FastifyInstance {
   app.register(swaggerUi, {
     routePrefix: '/docs',
     uiConfig: { docExpansion: 'list', deepLinking: true },
+  });
+
+  app.setErrorHandler((error: FastifyError, request, reply) => {
+    if (error.validation) {
+      const fieldErrors: Record<string, string[]> = {};
+      for (const issue of error.validation) {
+        const field =
+          issue.instancePath.replace(/^\//, '') ||
+          (issue.params?.missingProperty as string) ||
+          'query';
+        fieldErrors[field] = fieldErrors[field] || [];
+        fieldErrors[field].push(issue.message ?? 'Invalid value');
+      }
+
+      return reply.status(400).send({
+        code: 'VALIDATION_ERROR',
+        message: 'Invalid query parameters for availability search',
+        errors: fieldErrors,
+      });
+    }
+
+    return reply.send(error);
   });
 
   const storage = options.storage ?? (options.db ? new DrizzleSchedulingStorage(options.db) : undefined);

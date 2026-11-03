@@ -29,4 +29,10 @@ describe('Environment Configuration Parser', () => {
       /Environment configuration validation failed/,
     );
   });
+
+  it('throws error when NODE_ENV is production but DATABASE_URL is not provided', () => {
+    expect(() => parseEnvConfig({ NODE_ENV: 'production' })).toThrowError(
+      /DATABASE_URL.*required in production/i,
+    );
+  });
 });
