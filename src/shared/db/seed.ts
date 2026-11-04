@@ -4,7 +4,7 @@ import {
   ServiceTypeEnum,
   SkillCode,
   SkillCodeEnum,
-} from '../../features/scheduling/index.js';
+} from '../../features/scheduling/scheduling.contract.js';
 
 export const BASELINE_SERVICE_DURATIONS: Record<ServiceType, number> = {
   [ServiceTypeEnum.OIL_CHANGE]: 30,

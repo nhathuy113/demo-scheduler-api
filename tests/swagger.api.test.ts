@@ -33,17 +33,16 @@ describe('Fastify Swagger & Observability Integration', () => {
     await app.close();
   });
 
-  it('health endpoint returns UP status', async () => {
+  it('health endpoint reports an unavailable database', async () => {
     const app = buildApp();
     const response = await app.inject({
       method: 'GET',
       url: '/health',
     });
 
-    expect(response.statusCode).toBe(200);
+    expect(response.statusCode).toBe(503);
     const body = response.json();
-    expect(body.status).toBe('UP');
-    expect(body.service).toBe('unified-service-scheduler');
+    expect(body).toEqual({ status: 'DOWN', database: 'UNAVAILABLE' });
 
     await app.close();
   });

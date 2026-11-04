@@ -1,14 +1,12 @@
 import swagger from '@fastify/swagger';
 import swaggerUi from '@fastify/swagger-ui';
 import Fastify, { FastifyError, FastifyInstance } from 'fastify';
-import {
-  AvailabilityService,
-  BookingService,
-  createSchedulingRouter,
-  DrizzleDb,
-  DrizzleSchedulingStorage,
-  ISchedulingStorage,
-} from './features/scheduling/index.js';
+import { AvailabilityService } from './features/scheduling/availability.service.js';
+import { BookingService } from './features/scheduling/booking.service.js';
+import { DrizzleSchedulingStorage } from './features/scheduling/drizzle.storage.js';
+import { schedulingPlugin } from './features/scheduling/index.js';
+import { checkDatabaseHealth } from './features/scheduling/health.service.js';
+import { DrizzleDb, ISchedulingStorage } from './features/scheduling/scheduling.storage.js';
 
 export interface AppOptions {
   readonly db?: DrizzleDb;
@@ -17,12 +15,20 @@ export interface AppOptions {
 
 export function buildApp(options: AppOptions = {}): FastifyInstance {
   const app = Fastify({
-    logger: false,
+    logger: { level: 'info' },
     ajv: {
       customOptions: {
         strict: false,
       },
     },
+  });
+
+  app.addHook('onResponse', async (request, reply) => {
+    request.log.info({
+      requestId: request.id,
+      durationMs: reply.elapsedTime,
+      outcome: resolveOutcome(reply.statusCode),
+    }, 'request completed');
   });
 
   app.register(swagger, {
@@ -67,14 +73,25 @@ export function buildApp(options: AppOptions = {}): FastifyInstance {
   if (storage) {
     const availabilityService = new AvailabilityService(storage);
     const bookingService = new BookingService(storage);
-    app.register(createSchedulingRouter(availabilityService, bookingService));
+    app.register(schedulingPlugin(availabilityService, bookingService));
   }
 
-  app.get('/health', async () => ({
-    status: 'UP',
-    timestamp: new Date().toISOString(),
-    service: 'unified-service-scheduler',
-  }));
+  app.get('/health', async (request, reply) => {
+    const result = await checkDatabaseHealth(options.db);
+    if (!result.success) {
+      request.log.error({ err: result.error.cause }, 'database health check failed');
+      return reply.status(503).send({ status: 'DOWN', database: 'UNAVAILABLE' });
+    }
+
+    return { status: 'UP', database: result.data };
+  });
 
   return app;
+}
+
+function resolveOutcome(statusCode: number): string {
+  if (statusCode === 201) return 'CONFIRMED';
+  if (statusCode === 409) return 'CONFLICT';
+  if (statusCode >= 500) return 'ERROR';
+  return 'SUCCESS';
 }
