@@ -4,9 +4,11 @@ import Fastify, { FastifyError, FastifyInstance } from 'fastify';
 import { AvailabilityService } from './features/scheduling/availability.service.js';
 import { BookingService } from './features/scheduling/booking.service.js';
 import { DrizzleSchedulingStorage } from './features/scheduling/drizzle.storage.js';
+import { InMemorySchedulingStorage } from './features/scheduling/in-memory.storage.js';
 import { schedulingPlugin } from './features/scheduling/index.js';
 import { checkDatabaseHealth } from './features/scheduling/health.service.js';
 import { DrizzleDb, ISchedulingStorage } from './features/scheduling/scheduling.storage.js';
+import { healthRouteSchema, swaggerOptions, swaggerUiOptions } from './config/swagger.config.js';
 
 export interface AppOptions {
   readonly db?: DrizzleDb;
@@ -31,20 +33,22 @@ export function buildApp(options: AppOptions = {}): FastifyInstance {
     }, 'request completed');
   });
 
-  app.register(swagger, {
-    openapi: {
-      info: {
-        title: 'Unified Service Scheduler API',
-        description: 'Production OpenAPI specification with Drizzle ORM and PostgreSQL',
-        version: '1.0.0',
-      },
-      servers: [{ url: 'http://127.0.0.1:3000', description: 'Local Server' }],
-    },
-  });
+  app.register(swagger, swaggerOptions);
 
-  app.register(swaggerUi, {
-    routePrefix: '/docs',
-    uiConfig: { docExpansion: 'list', deepLinking: true },
+  app.addHook('onRequest', async (request, reply) => {
+    const origin = request.headers.origin;
+    if (origin) {
+      const isAllowed = /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(origin) || origin.endsWith('.keyloop.internal');
+      if (isAllowed) {
+        reply.header('Access-Control-Allow-Origin', origin);
+        reply.header('Access-Control-Allow-Credentials', 'true');
+      }
+      reply.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, PATCH, OPTIONS');
+      reply.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, Accept, Origin');
+    }
+    if (request.method === 'OPTIONS') {
+      return reply.status(204).send();
+    }
   });
 
   app.setErrorHandler((error: FastifyError, _request, reply) => {
@@ -69,22 +73,28 @@ export function buildApp(options: AppOptions = {}): FastifyInstance {
     return reply.send(error);
   });
 
-  const storage = options.storage ?? (options.db ? new DrizzleSchedulingStorage(options.db) : undefined);
-  if (storage) {
-    const availabilityService = new AvailabilityService(storage);
-    const bookingService = new BookingService(storage);
-    app.register(schedulingPlugin(availabilityService, bookingService));
-  }
+  const storage = options.storage ?? (options.db ? new DrizzleSchedulingStorage(options.db) : new InMemorySchedulingStorage());
+  const availabilityService = new AvailabilityService(storage);
+  const bookingService = new BookingService(storage);
+  app.register(schedulingPlugin(availabilityService, bookingService));
 
-  app.get('/health', async (request, reply) => {
-    const result = await checkDatabaseHealth(options.db);
-    if (!result.success) {
-      request.log.error({ err: result.error.cause }, 'database health check failed');
-      return reply.status(503).send({ status: 'DOWN', database: 'UNAVAILABLE' });
-    }
+  app.register(async (healthApp) => {
+    healthApp.get(
+      '/health',
+      { schema: healthRouteSchema },
+      async (request, reply) => {
+        const result = await checkDatabaseHealth(options.db);
+        if (!result.success) {
+          request.log.error({ err: result.error.cause }, 'database health check failed');
+          return reply.status(503).send({ status: 'DOWN', database: 'UNAVAILABLE' });
+        }
 
-    return { status: 'UP', database: result.data };
+        return { status: 'UP', database: result.data };
+      },
+    );
   });
+
+  app.register(swaggerUi, swaggerUiOptions);
 
   return app;
 }

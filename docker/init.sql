@@ -57,10 +57,14 @@ CREATE TABLE IF NOT EXISTS appointments (
     vehicle_vin VARCHAR(64) NOT NULL,
     service_bay_id VARCHAR(64) NOT NULL REFERENCES service_bays(id),
     technician_id VARCHAR(64) NOT NULL REFERENCES technicians(id),
-    service_type VARCHAR(64) NOT NULL REFERENCES service_types(code),
+    service_type VARCHAR(64) NOT NULL REFERENCES service_types(code)
+        CONSTRAINT chk_appointments_service_type CHECK (service_type IN (
+            'OIL_CHANGE', 'TIRE_ROTATION', 'BRAKE_INSPECTION', 'ENGINE_DIAGNOSTIC', 'BATTERY_EV_SERVICE'
+        )),
     start_time TIMESTAMPTZ NOT NULL,
     end_time TIMESTAMPTZ NOT NULL,
-    status VARCHAR(32) NOT NULL DEFAULT 'CONFIRMED',
+    status VARCHAR(32) NOT NULL DEFAULT 'CONFIRMED'
+        CONSTRAINT chk_appointments_status CHECK (status IN ('CONFIRMED', 'CANCELLED')),
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 

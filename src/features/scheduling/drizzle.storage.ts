@@ -1,5 +1,5 @@
 import { randomUUID } from 'node:crypto';
-import { and, eq, gt, lt, or, sql } from 'drizzle-orm';
+import { and, asc, eq, gt, lt, or, sql } from 'drizzle-orm';
 import * as schema from '../../db/schema.js';
 import {
   ConfirmedAppointment,
@@ -108,43 +108,36 @@ export class DrizzleSchedulingStorage implements ISchedulingStorage {
       }
 
       const id = input.appointmentId ?? `APPT-${randomUUID()}`;
-      const [inserted] = await tx
-        .insert(schema.appointments)
-        .values({
-          id,
-          dealershipId: input.dealershipId,
-          customerId: input.customerId,
-          vehicleVin: input.vehicleVin,
-          serviceBayId: input.serviceBayId,
-          technicianId: input.technicianId,
-          serviceType: input.serviceType,
-          startTime: input.startTime,
-          endTime: input.endTime,
-          status: 'CONFIRMED',
-        })
-        .returning({ createdAt: schema.appointments.createdAt });
+      const [ins] = await tx.insert(schema.appointments).values({
+        id, dealershipId: input.dealershipId, customerId: input.customerId, vehicleVin: input.vehicleVin,
+        serviceBayId: input.serviceBayId, technicianId: input.technicianId, serviceType: input.serviceType,
+        startTime: input.startTime, endTime: input.endTime, status: 'CONFIRMED',
+      }).returning({ createdAt: schema.appointments.createdAt });
 
       return Result.ok({
-        appointmentId: id,
-        dealershipId: input.dealershipId,
-        customerId: input.customerId,
-        vehicleVin: input.vehicleVin,
-        serviceBayId: input.serviceBayId,
-        technicianId: input.technicianId,
-        serviceType: input.serviceType,
-        startTime: input.startTime.toISOString(),
-        endTime: input.endTime.toISOString(),
-        status: 'CONFIRMED',
-        createdAt: inserted.createdAt.toISOString(),
+        appointmentId: id, dealershipId: input.dealershipId, customerId: input.customerId, vehicleVin: input.vehicleVin,
+        serviceBayId: input.serviceBayId, technicianId: input.technicianId, serviceType: input.serviceType,
+        startTime: input.startTime.toISOString(), endTime: input.endTime.toISOString(), status: 'CONFIRMED',
+        createdAt: ins.createdAt.toISOString(),
       });
     });
   }
 
   async countAppointments(dealershipId: string, startTime: Date): Promise<number> {
-    const rows = await this.db
-      .select({ id: schema.appointments.id })
-      .from(schema.appointments)
+    const rows = await this.db.select({ id: schema.appointments.id }).from(schema.appointments)
       .where(and(eq(schema.appointments.dealershipId, dealershipId), eq(schema.appointments.startTime, startTime), eq(schema.appointments.status, 'CONFIRMED')));
     return rows.length;
+  }
+
+  async getAppointmentsByVin(vehicleVin: string): Promise<readonly ConfirmedAppointment[]> {
+    const rows = await this.db.select().from(schema.appointments)
+      .where(and(eq(schema.appointments.vehicleVin, vehicleVin), eq(schema.appointments.status, 'CONFIRMED')))
+      .orderBy(asc(schema.appointments.startTime));
+    return rows.map((r) => ({
+      appointmentId: r.id, dealershipId: r.dealershipId, customerId: r.customerId, vehicleVin: r.vehicleVin,
+      serviceBayId: r.serviceBayId, technicianId: r.technicianId, serviceType: r.serviceType as ServiceType,
+      startTime: r.startTime.toISOString(), endTime: r.endTime.toISOString(), status: r.status as 'CONFIRMED' | 'CANCELLED',
+      createdAt: r.createdAt.toISOString(),
+    }));
   }
 }

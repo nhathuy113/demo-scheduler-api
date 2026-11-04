@@ -29,6 +29,16 @@ describe('Fastify Swagger & Observability Integration', () => {
     const spec = response.json();
     expect(spec.openapi).toMatch(/^3\./);
     expect(spec.info.title).toBe('Unified Service Scheduler API');
+    expect(spec.paths['/api/v1/availability'].get.tags).toContain('Availability');
+    expect(spec.paths['/api/v1/availability'].get.responses['200']).toBeDefined();
+    expect(spec.paths['/api/v1/availabilities'].get.tags).toContain('Availability');
+    expect(spec.paths['/api/v1/availabilities'].get.responses['200']).toBeDefined();
+    expect(spec.paths['/api/v1/appointments/book'].post.tags).toContain('Appointments');
+    expect(spec.paths['/api/v1/appointments/book'].post.responses['201']).toBeDefined();
+    expect(spec.paths['/api/v1/vehicles/{vehicleVin}/appointments'].get.tags).toContain('Appointments');
+    expect(spec.paths['/api/v1/vehicles/{vehicleVin}/appointments'].get.responses['200']).toBeDefined();
+    expect(spec.paths['/health'].get.tags).toContain('Health');
+    expect(spec.paths['/health'].get.responses['200']).toBeDefined();
 
     await app.close();
   });

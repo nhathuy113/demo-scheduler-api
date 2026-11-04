@@ -59,4 +59,11 @@ export class BookingService {
       endTime: allocationResult.data.endTime,
     });
   }
+
+  async getAppointmentsByVehicleVin(
+    vehicleVin: string,
+  ): Promise<Result<readonly ConfirmedAppointment[], DomainError>> {
+    const appointments = await this.storage.getAppointmentsByVin(vehicleVin);
+    return Result.ok(appointments);
+  }
 }
