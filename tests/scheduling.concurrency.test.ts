@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { buildApp } from '../src/app.js';
-import { InMemorySchedulingStorage } from '../src/features/scheduling/index.js';
+import { InMemorySchedulingStorage } from '../src/features/scheduling/in-memory.storage.js';
 
 describe('Anti-Double-Booking Concurrency Guard (Task 3)', () => {
   it('allows exactly 1 booking and rejects 9 concurrent requests with 409 Conflict', async () => {
