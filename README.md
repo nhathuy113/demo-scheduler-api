@@ -4,7 +4,12 @@ A resource-constrained service appointment scheduling platform (Scenario A: The 
 
 > 🎬 **5-Minute Technical Walkthrough Video:** [**Watch Full Architecture & Live Demo (05:10)**](#-4-technical-walkthrough-video) | [Download MP4](./walkthrough_video_final.mp4)
 
+
+https://github.com/user-attachments/assets/0d34ee57-3345-4516-b977-17369297d40f
+
+
 ---
+
 
 ## 1. How to Run
 
