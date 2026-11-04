@@ -2,6 +2,8 @@
 
 A resource-constrained service appointment scheduling platform (Scenario A: The Unified Service Scheduler).
 
+> 🎬 **5-Minute Technical Walkthrough Video:** [**Watch Full Architecture & Live Demo (05:10)**](#-4-technical-walkthrough-video) | [Download MP4](./walkthrough_video_final.mp4)
+
 ---
 
 ## 1. How to Run
@@ -102,3 +104,21 @@ We applied **Active Human Skepticism** to correct AI architectural blind spots:
   pnpm test  # 12 test files, 45 tests — 100% PASS
   ```
 - **Read the Full Narrative:** For complete architectural logs and engineering audit trails, see [**`docs/ai-collaboration-narrative.md`**](docs/ai-collaboration-narrative.md).
+
+---
+
+## 🎬 4. Technical Walkthrough Video
+
+> **Keyloop Technical Assessment Deliverable 3:** Full 5-minute video presentation covering System Design, Concurrency Defense, Live Swagger Execution, and the AI Collaboration Story.
+
+▶️ **[Click here to watch the full 5-Minute Walkthrough Video (MP4, 1080p Full HD)](./walkthrough_video_final.mp4)**  
+*(Duration: **05:10** | Format: **H.264 / AAC 1080p** | Size: **8.74 MB** | Native GitHub Browser Playback)*
+
+### ⏱️ Video Chapter Breakdown
+- **`00:00 – 00:30`** — **Intro & The Automotive Dilemma:** Dealership dual-resource dilemma (Bay + Tech).
+- **`00:30 – 01:33`** — **5-Tier System Architecture:** Mathematical half-open intervals `[start, end)`, Strategy Pattern DI.
+- **`01:33 – 02:27`** — **Vertical Slice Architecture:** Locality of behavior in `src/features/scheduling/` & strict `AGENTS.md` rules ($\le 150$ LOC).
+- **`02:27 – 02:50`** — **Turnkey Setup & Health:** One-command Docker + 45/45 tests passing suite (100% PASS).
+- **`02:50 – 03:53`** — **Live Swagger Demo:** Pre-seeded data ➔ `GET /availabilities` (200 OK) ➔ `POST /book` (201 Created atomic lock).
+- **`03:53 – 04:41`** — **AI Collaboration Narrative:** Triad Workflow (Human + 2 Frontier models + Flash runner) & human skepticism.
+- **`04:41 – 05:11`** — **Test Suite & Finale:** Terminal 100% PASS proof ➔ Return to GitHub repo wrap-up.
