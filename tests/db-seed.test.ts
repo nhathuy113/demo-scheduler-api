@@ -2,7 +2,7 @@ import { describe, expect, it, vi } from 'vitest';
 import {
   ServiceTypeEnum,
   SkillCodeEnum,
-} from '../src/features/scheduling/index.js';
+} from '../src/features/scheduling/scheduling.contract.js';
 import {
   BASELINE_REQUIRED_SKILLS,
   BASELINE_SERVICE_DURATIONS,
