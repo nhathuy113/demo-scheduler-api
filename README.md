@@ -44,8 +44,8 @@ make dev                # Start foreground server with hot reload (tsx watch)
 | Entity | Seeded Value | Context & Behavior |
 | :--- | :--- | :--- |
 | **Dealership ID** | `D01` | Configured with 2 Bays (`BAY-01`, `BAY-02`) and 2 Techs (`TECH-01`, `TECH-02`). |
-| **Vehicle ID / VIN** | `1HGCR2F83HA000000` | Pre-seeded with confirmed bookings. Supports ISO 17-char VIN or legacy vehicle IDs (e.g. `VEH-00123`). |
-| **Customer ID** | `CUST-01` | Pre-seeded active customer identifier. |
+| **Vehicle ID / VIN** | `1HGCR2F83HA000000` | Target vehicle identifier for tests (supports ISO 17-char VIN or legacy IDs like `VEH-00123`). Returns `[]` until first booking is created on fresh database. |
+| **Customer ID** | `CUST-01` | Customer identifier for bookings (matches seeded customer references). |
 | **Service Types** | `OIL_CHANGE` (30m)<br/>`TIRE_ROTATION` (30m)<br/>`BRAKE_INSPECTION` (45m)<br/>`ENGINE_DIAGNOSTIC` (60m)<br/>`BATTERY_EV_SERVICE` (90m) | Evaluates dual resources: Bay capacity + Technician skill certification (`HIGH_VOLTAGE_EV` required for EV). |
 | **Reference Date** | `2026-11-04` | Standard test date (accepts any valid `YYYY-MM-DD`). |
 
@@ -91,7 +91,7 @@ Rather than relying on open-ended AI prompting, we enforced a **Spec-Driven Deve
 ### 3.2. Verification & Refinement Process
 We applied **Active Human Skepticism** to correct AI architectural blind spots:
 - **Vetoed Horizontal Layers:** Rejected the AI's proposal to split code into conventional horizontal layers (`controllers/`, `services/`, `models/`), enforcing modular Vertical Slices.
-- **Enforced Concurrency Locking:** Replaced naive application-level checks with atomic database row-level locks (`SELECT ... FOR UPDATE` in PostgreSQL transactions) to eliminate double-booking race conditions.
+- **Enforced Concurrency Locking:** Replaced naive application-level checks with PostgreSQL transaction-scoped advisory locks (`pg_advisory_xact_lock`) combined with row-level locks (`SELECT ... FOR UPDATE`) in `DrizzleSchedulingStorage.saveAppointmentAtomic` to serialize competing writers and eliminate double-booking race conditions.
 - **Fixed Degraded Stubs:** Detected and eradicated mock placeholder responses on `/api/v1/availabilities`, wiring it directly into the real availability engine.
 - **Client Recognition & Flexible Vehicle Identifiers:** Relaxed rigid 17-character VIN constraints to support legacy DMS opaque identifiers, reflecting real-world automotive intake workflows (*"A good dealership remembers clients' tastes"*).
 

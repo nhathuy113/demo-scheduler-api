@@ -63,11 +63,20 @@ export function createSchedulingRouter(
         const targetServiceType = (serviceType as ServiceType) || ServiceTypeEnum.OIL_CHANGE;
         const targetDate = date || new Date().toISOString().slice(0, 10);
 
-        const result = await service.getAvailableSlots({
+        const parsed = AvailabilityQuerySchema.safeParse({
           dealershipId,
           serviceType: targetServiceType,
           date: targetDate,
         });
+        if (!parsed.success) {
+          return reply.status(400).send({
+            code: 'VALIDATION_ERROR',
+            message: 'Invalid availability query parameters',
+            errors: parsed.error.flatten().fieldErrors,
+          });
+        }
+
+        const result = await service.getAvailableSlots(parsed.data);
 
         if (!result.success) {
           return reply.status(404).send(result.error);

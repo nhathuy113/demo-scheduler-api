@@ -38,10 +38,13 @@ export function buildApp(options: AppOptions = {}): FastifyInstance {
   app.addHook('onRequest', async (request, reply) => {
     const origin = request.headers.origin;
     if (origin) {
-      reply.header('Access-Control-Allow-Origin', origin);
+      const isAllowed = /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(origin) || origin.endsWith('.keyloop.internal');
+      if (isAllowed) {
+        reply.header('Access-Control-Allow-Origin', origin);
+        reply.header('Access-Control-Allow-Credentials', 'true');
+      }
       reply.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, PATCH, OPTIONS');
       reply.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, Accept, Origin');
-      reply.header('Access-Control-Allow-Credentials', 'true');
     }
     if (request.method === 'OPTIONS') {
       return reply.status(204).send();

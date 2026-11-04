@@ -26,8 +26,9 @@ export const bookingRouteSchema = {
       dealershipId: { type: 'string', description: 'Dealership facility identifier', example: 'D01' },
       vehicleVin: {
         type: 'string',
-        pattern: '^[A-HJ-NPR-Z0-9]{17}$',
-        description: '17-character ISO 3779 Vehicle Identification Number (excludes I, O, Q)',
+        minLength: 1,
+        maxLength: 64,
+        description: 'Vehicle identifier (17-char ISO VIN or legacy DMS opaque identifier)',
         example: '1HGCR2F83HA000000',
       },
       serviceType: {
