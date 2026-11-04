@@ -1,9 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { buildApp } from '../src/app.js';
-import {
-  InMemorySchedulingStorage,
-  ServiceTypeEnum,
-} from '../src/features/scheduling/index.js';
+import { InMemorySchedulingStorage } from '../src/features/scheduling/in-memory.storage.js';
+import { ServiceTypeEnum } from '../src/features/scheduling/scheduling.contract.js';
 
 describe('E2E /api/v1/availability Acceptance Tests', () => {
   function createTestStorage() {
