@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   AvailabilityQuerySchema,
   ServiceTypeEnum,
-} from '../src/features/scheduling/index.js';
+} from '../src/features/scheduling/scheduling.contract.js';
 
 describe('AvailabilityQuerySchema Contract Verification', () => {
   it('passes validation with valid required parameters', () => {
