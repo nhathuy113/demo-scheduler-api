@@ -96,4 +96,25 @@ describe('E2E Availability', () => {
 
     await app.close();
   });
+
+  it('GET /availabilities valid → 200 with calculated real slots and summary', async () => {
+    const storage = makeStorage();
+    const app = buildApp({ storage });
+    await app.ready();
+
+    const res = await app.inject({
+      method: 'GET',
+      url: `${BASE}/availabilities?dealershipId=D01&includeBooked=false`,
+    });
+
+    expect(res.statusCode).toBe(200);
+    const body = res.json();
+    expect(body.dealershipId).toBe('D01');
+    expect(body.includeBooked).toBe(false);
+    expect(Array.isArray(body.availableSlots)).toBe(true);
+    expect(body.availableSlots.length).toBeGreaterThan(0);
+    expect(body.message).toContain('available slots for D01');
+
+    await app.close();
+  });
 });

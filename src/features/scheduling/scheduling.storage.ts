@@ -36,4 +36,5 @@ export interface ISchedulingStorage {
   getServiceConfig(serviceType: ServiceType): Promise<ServiceConfig | null>;
   saveAppointmentAtomic(input: BookAppointmentRecordInput): Promise<Result<ConfirmedAppointment, DomainError>>;
   countAppointments(dealershipId: string, startTime: Date): Promise<number>;
+  getAppointmentsByVin(vehicleVin: string): Promise<readonly ConfirmedAppointment[]>;
 }

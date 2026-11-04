@@ -1,6 +1,6 @@
 import { FastifyInstance, FastifyPluginAsync } from 'fastify';
 import { AvailabilityService } from './availability.service.js';
-import { AvailabilityQuerySchema } from './scheduling.contract.js';
+import { AvailabilityQuerySchema, ServiceType, ServiceTypeEnum } from './scheduling.contract.js';
 import { BookingService } from './booking.service.js';
 import { createBookingRouter } from './booking.router.js';
 import { availabilitiesRouteSchema, availabilityRouteSchema } from './scheduling.swagger.js';
@@ -51,13 +51,40 @@ export function createSchedulingRouter(
           });
         }
 
+        const validServices = Object.values(ServiceTypeEnum) as string[];
+        if (serviceType && !validServices.includes(serviceType)) {
+          return reply.status(400).send({
+            code: 'VALIDATION_ERROR',
+            message: 'Invalid service type',
+            errors: { serviceType: ['Invalid service type'] },
+          });
+        }
+
+        const targetServiceType = (serviceType as ServiceType) || ServiceTypeEnum.OIL_CHANGE;
+        const targetDate = date || new Date().toISOString().slice(0, 10);
+
+        const result = await service.getAvailableSlots({
+          dealershipId,
+          serviceType: targetServiceType,
+          date: targetDate,
+        });
+
+        if (!result.success) {
+          return reply.status(404).send(result.error);
+        }
+
+        const availableSlots = result.data.map((slot) => ({
+          startTime: slot.startTime,
+          endTime: slot.endTime,
+        }));
+
         return reply.status(200).send({
           dealershipId,
-          serviceType,
-          date,
-          includeBooked,
-          availableSlots: [],
-          message: 'Getting availability for ' + dealershipId,
+          serviceType: targetServiceType,
+          date: targetDate,
+          includeBooked: Boolean(includeBooked),
+          availableSlots,
+          message: `Found ${availableSlots.length} available slots for ${dealershipId}`,
         });
       },
     );

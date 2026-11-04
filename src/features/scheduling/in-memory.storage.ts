@@ -107,4 +107,8 @@ export class InMemorySchedulingStorage implements ISchedulingStorage {
       (a) => a.startTime.getTime() === startTime.getTime(),
     ).length;
   }
+
+  async getAppointmentsByVin(vehicleVin: string): Promise<readonly ConfirmedAppointment[]> {
+    return this.confirmedAppointments.filter((a) => a.vehicleVin === vehicleVin);
+  }
 }

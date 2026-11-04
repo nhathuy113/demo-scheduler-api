@@ -35,6 +35,8 @@ describe('Fastify Swagger & Observability Integration', () => {
     expect(spec.paths['/api/v1/availabilities'].get.responses['200']).toBeDefined();
     expect(spec.paths['/api/v1/appointments/book'].post.tags).toContain('Appointments');
     expect(spec.paths['/api/v1/appointments/book'].post.responses['201']).toBeDefined();
+    expect(spec.paths['/api/v1/vehicles/{vehicleVin}/appointments'].get.tags).toContain('Appointments');
+    expect(spec.paths['/api/v1/vehicles/{vehicleVin}/appointments'].get.responses['200']).toBeDefined();
     expect(spec.paths['/health'].get.tags).toContain('Health');
     expect(spec.paths['/health'].get.responses['200']).toBeDefined();
 

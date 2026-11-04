@@ -1,3 +1,17 @@
+const appointmentProperties = {
+  appointmentId: { type: 'string', description: 'Unique booking ID' },
+  dealershipId: { type: 'string', description: 'Dealership ID' },
+  customerId: { type: 'string', description: 'Customer ID' },
+  vehicleVin: { type: 'string', description: 'Vehicle VIN' },
+  serviceBayId: { type: 'string', description: 'Allocated service bay ID' },
+  technicianId: { type: 'string', description: 'Allocated technician ID' },
+  serviceType: { type: 'string', description: 'Service type code' },
+  startTime: { type: 'string', format: 'date-time', description: 'Scheduled start time' },
+  endTime: { type: 'string', format: 'date-time', description: 'Scheduled end time' },
+  status: { type: 'string', enum: ['CONFIRMED', 'CANCELLED'], description: 'Booking status' },
+  createdAt: { type: 'string', format: 'date-time', description: 'Record creation timestamp' },
+} as const;
+
 export const bookingRouteSchema = {
   summary: 'Atomically book a service appointment',
   description:
@@ -8,16 +22,8 @@ export const bookingRouteSchema = {
     type: 'object',
     required: ['customerId', 'dealershipId', 'vehicleVin', 'serviceType', 'requestedStartTime'],
     properties: {
-      customerId: {
-        type: 'string',
-        description: 'Customer identifier',
-        example: 'CUST-01',
-      },
-      dealershipId: {
-        type: 'string',
-        description: 'Dealership facility identifier',
-        example: 'D01',
-      },
+      customerId: { type: 'string', description: 'Customer identifier', example: 'CUST-01' },
+      dealershipId: { type: 'string', description: 'Dealership facility identifier', example: 'D01' },
       vehicleVin: {
         type: 'string',
         pattern: '^[A-HJ-NPR-Z0-9]{17}$',
@@ -42,19 +48,7 @@ export const bookingRouteSchema = {
     201: {
       description: 'Appointment confirmed and dual resources allocated',
       type: 'object',
-      properties: {
-        appointmentId: { type: 'string', description: 'Unique booking ID' },
-        dealershipId: { type: 'string', description: 'Dealership ID' },
-        customerId: { type: 'string', description: 'Customer ID' },
-        vehicleVin: { type: 'string', description: 'Vehicle VIN' },
-        serviceBayId: { type: 'string', description: 'Allocated service bay ID' },
-        technicianId: { type: 'string', description: 'Allocated technician ID' },
-        serviceType: { type: 'string', description: 'Service type code' },
-        startTime: { type: 'string', format: 'date-time', description: 'Scheduled start time' },
-        endTime: { type: 'string', format: 'date-time', description: 'Scheduled end time' },
-        status: { type: 'string', enum: ['CONFIRMED', 'CANCELLED'], description: 'Booking status' },
-        createdAt: { type: 'string', format: 'date-time', description: 'Record creation timestamp' },
-      },
+      properties: appointmentProperties,
     },
     400: {
       description: 'Request payload validation failure',
@@ -94,6 +88,55 @@ export const bookingRouteSchema = {
           example: 'TECHNICIAN_UNAVAILABLE',
         },
         message: { type: 'string', example: 'No qualified technician available for this time slot' },
+      },
+    },
+  },
+} as const;
+
+export const getVehicleAppointmentsSchema = {
+  summary: 'Retrieve all confirmed appointments for a vehicle',
+  description:
+    'Returns chronological list of confirmed workshop appointments associated with the specified vehicle identifier (VIN or legacy vehicle ID).',
+  operationId: 'getAppointmentsByVehicleVin',
+  tags: ['Appointments'],
+  params: {
+    type: 'object',
+    required: ['vehicleVin'],
+    properties: {
+      vehicleVin: {
+        type: 'string',
+        description: 'Vehicle identifier (inclusive, opaque identifier from legacy DMS or ISO VIN)',
+        example: '1HGCR2F83HA000000',
+      },
+    },
+  },
+  response: {
+    200: {
+      description: 'List of confirmed appointments for the vehicle',
+      type: 'array',
+      items: {
+        type: 'object',
+        properties: appointmentProperties,
+      },
+    },
+    400: {
+      description: 'Invalid Vehicle Identifier format',
+      type: 'object',
+      properties: {
+        code: { type: 'string', example: 'VALIDATION_ERROR' },
+        message: { type: 'string', example: 'Invalid vehicle identifier format' },
+        errors: {
+          type: 'object',
+          additionalProperties: { type: 'array', items: { type: 'string' } },
+        },
+      },
+    },
+    404: {
+      description: 'Vehicle not found or no associated appointments',
+      type: 'object',
+      properties: {
+        code: { type: 'string', example: 'NOT_FOUND' },
+        message: { type: 'string', example: 'No appointments found' },
       },
     },
   },

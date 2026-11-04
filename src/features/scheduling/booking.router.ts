@@ -1,7 +1,12 @@
 import { FastifyInstance, FastifyPluginAsync } from 'fastify';
+import { z } from 'zod';
 import { BookingRequestSchema, DomainError } from './scheduling.contract.js';
 import { BookingService } from './booking.service.js';
-import { bookingRouteSchema } from './booking.swagger.js';
+import { bookingRouteSchema, getVehicleAppointmentsSchema } from './booking.swagger.js';
+
+const VehicleVinParamsSchema = z.object({
+  vehicleVin: z.string().min(1, 'Vehicle identifier is required'),
+});
 
 const DOMAIN_ERROR_HTTP_STATUS: Record<DomainError['code'], 404 | 409 | 422> = {
   SERVICE_NOT_FOUND: 404,
@@ -34,6 +39,28 @@ export function createBookingRouter(service: BookingService): FastifyPluginAsync
         }
 
         return reply.status(201).send(result.data);
+      },
+    );
+
+    app.get(
+      '/api/v1/vehicles/:vehicleVin/appointments',
+      { schema: getVehicleAppointmentsSchema },
+      async (request, reply) => {
+        const parseResult = VehicleVinParamsSchema.safeParse(request.params);
+        if (!parseResult.success) {
+          return reply.status(400).send({
+            code: 'VALIDATION_ERROR',
+            message: 'Invalid vehicle VIN format',
+            errors: parseResult.error.flatten().fieldErrors,
+          });
+        }
+
+        const result = await service.getAppointmentsByVehicleVin(parseResult.data.vehicleVin);
+        if (!result.success) {
+          return reply.status(404).send(result.error);
+        }
+
+        return reply.status(200).send(result.data);
       },
     );
   };
