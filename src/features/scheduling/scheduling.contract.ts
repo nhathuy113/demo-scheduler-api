@@ -1,4 +1,4 @@
-import { isMatch, isValid, parseISO } from 'date-fns';
+import { isValid } from 'date-fns';
 import { z } from 'zod';
 
 export const ServiceTypeEnum = {
@@ -20,10 +20,7 @@ export const SkillCodeEnum = {
 
 export type SkillCode = (typeof SkillCodeEnum)[keyof typeof SkillCodeEnum];
 
-export interface TimeSlot {
-  readonly startTime: Date;
-  readonly endTime: Date;
-}
+export interface TimeSlot { readonly startTime: Date; readonly endTime: Date; }
 
 export interface ListAvailsResponse {
   readonly date: string;
@@ -32,19 +29,9 @@ export interface ListAvailsResponse {
   readonly timeSlots: readonly ListAvailsTimeSlot[];
 }
 
-export interface ListAvailsTimeSlot {
-  readonly startTime: string;
-  readonly endTime: string;
-}
-
-export interface ServiceBay {
-  readonly id: string;
-}
-
-export interface Technician {
-  readonly id: string;
-  readonly skills: readonly string[];
-}
+export interface ListAvailsTimeSlot { readonly startTime: string; readonly endTime: string; }
+export interface ServiceBay { readonly id: string; }
+export interface Technician { readonly id: string; readonly skills: readonly string[]; }
 
 export interface ExistingBooking {
   readonly serviceBayId: string;
@@ -96,24 +83,26 @@ export interface ConfirmedAppointment {
   readonly createdAt: string;
 }
 
+const CalendarDateSchema = z
+  .string()
+  .regex(/^\d{4}-\d{2}-\d{2}$/, 'Date must be formatted as YYYY-MM-DD')
+  .refine((val) => {
+    const [y, m, d] = val.split('-').map(Number);
+    const date = new Date(Date.UTC(y, m - 1, d));
+    return (
+      isValid(date) &&
+      date.getUTCFullYear() === y &&
+      date.getUTCMonth() === m - 1 &&
+      date.getUTCDate() === d
+    );
+  }, { message: 'Date must be a valid calendar date' });
+
 export const AvailabilityQuerySchema = z.object({
   dealershipId: z.string().min(1, 'Dealership ID is required'),
   serviceType: z.nativeEnum(ServiceTypeEnum, {
     errorMap: () => ({ message: 'Invalid service type' }),
   }),
-  date: z
-    .string()
-    .regex(/^\d{4}-\d{2}-\d{2}$/, 'Date must be formatted as YYYY-MM-DD')
-    .refine((val) => {
-      const [y, m, d] = val.split('-').map(Number);
-      const date = new Date(Date.UTC(y, m - 1, d));
-      return (
-        isValid(date) &&
-        date.getUTCFullYear() === y &&
-        date.getUTCMonth() === m - 1 &&
-        date.getUTCDate() === d
-      );
-    }, { message: 'Date must be a valid calendar date' }),
+  date: CalendarDateSchema,
   vehicleVin: z
     .string()
     .regex(/^[A-HJ-NPR-Z0-9]{17}$/, 'Invalid VIN format: must be 17 uppercase characters excluding I, O, Q')
@@ -121,6 +110,24 @@ export const AvailabilityQuerySchema = z.object({
 });
 
 export type AvailabilityQuery = z.infer<typeof AvailabilityQuerySchema>;
+
+export const AvailabilitiesQuerySchema = z.object({
+  dealershipId: z.string().min(1, 'Dealership ID is required'),
+  serviceType: z.nativeEnum(ServiceTypeEnum).default(ServiceTypeEnum.OIL_CHANGE),
+  date: CalendarDateSchema.optional(),
+  includeBooked: z.coerce.boolean().default(false),
+});
+
+export type AvailabilitiesQuery = z.infer<typeof AvailabilitiesQuerySchema>;
+
+export interface AvailabilitiesOverviewResponse {
+  readonly dealershipId: string;
+  readonly serviceType: ServiceType;
+  readonly date: string;
+  readonly includeBooked: boolean;
+  readonly availableSlots: readonly { readonly startTime: string; readonly endTime: string }[];
+  readonly message: string;
+}
 
 export const BookingRequestSchema = z.object({
   customerId: z.string().min(1, 'Customer ID is required'),

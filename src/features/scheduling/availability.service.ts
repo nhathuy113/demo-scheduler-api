@@ -1,6 +1,8 @@
 import { parseISO } from 'date-fns';
 import { Result } from '../../shared/result.js';
 import {
+  AvailabilitiesOverviewResponse,
+  AvailabilitiesQuery,
   AvailabilityQuery,
   AvailableSlotResponse,
   DomainError,
@@ -54,31 +56,33 @@ export class AvailabilityService {
     return Result.ok(slots);
   }
 
-  /**
-   * Returns a simple list of candidate time slots for Oil Change service
-   * (without bay/technician matching). Used for the "list avails" endpoint.
-   */
-  async listAvails(
-    dealershipId: string,
-  ): Promise<Result<readonly TimeSlot[], DomainError>> {
-    const serviceConfig = await this.storage.getServiceConfig(ServiceTypeEnum.OIL_CHANGE);
-    if (!serviceConfig) {
-      return Result.err({
-        code: 'SERVICE_NOT_FOUND',
-        message: 'Oil Change service type is not configured in database catalog',
-      });
+  async getAvailabilitiesOverview(
+    query: AvailabilitiesQuery,
+  ): Promise<Result<AvailabilitiesOverviewResponse, DomainError>> {
+    const targetDate = query.date || new Date().toISOString().slice(0, 10);
+    const slotsResult = await this.getAvailableSlots({
+      dealershipId: query.dealershipId,
+      serviceType: query.serviceType,
+      date: targetDate,
+    });
+
+    if (!slotsResult.success) {
+      return slotsResult;
     }
 
-    const today = new Date();
-    const todayStart = new Date(Date.UTC(today.getUTCFullYear(), today.getUTCMonth(), today.getUTCDate()));
-    const todayStr = todayStart.toISOString().slice(0, 10);
+    const availableSlots = slotsResult.data.map((slot) => ({
+      startTime: slot.startTime,
+      endTime: slot.endTime,
+    }));
 
-    const candidateSlots = generateCandidateSlots(
-      todayStr,
-      serviceConfig.durationMinutes,
-    );
-
-    return Result.ok(candidateSlots);
+    return Result.ok({
+      dealershipId: query.dealershipId,
+      serviceType: query.serviceType,
+      date: targetDate,
+      includeBooked: query.includeBooked,
+      availableSlots,
+      message: `Found ${availableSlots.length} available slots for ${query.dealershipId}`,
+    });
   }
 
   /**
