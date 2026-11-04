@@ -43,6 +43,9 @@ export function buildApp(options: AppOptions = {}): FastifyInstance {
       reply.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, Accept, Origin');
       reply.header('Access-Control-Allow-Credentials', 'true');
     }
+    if (request.method === 'OPTIONS') {
+      return reply.status(204).send();
+    }
   });
 
   app.setErrorHandler((error: FastifyError, _request, reply) => {

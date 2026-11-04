@@ -1,5 +1,5 @@
 import { randomUUID } from 'node:crypto';
-import { and, eq, gt, lt, or, sql } from 'drizzle-orm';
+import { and, asc, eq, gt, lt, or, sql } from 'drizzle-orm';
 import * as schema from '../../db/schema.js';
 import {
   ConfirmedAppointment,
@@ -131,7 +131,8 @@ export class DrizzleSchedulingStorage implements ISchedulingStorage {
 
   async getAppointmentsByVin(vehicleVin: string): Promise<readonly ConfirmedAppointment[]> {
     const rows = await this.db.select().from(schema.appointments)
-      .where(and(eq(schema.appointments.vehicleVin, vehicleVin), eq(schema.appointments.status, 'CONFIRMED')));
+      .where(and(eq(schema.appointments.vehicleVin, vehicleVin), eq(schema.appointments.status, 'CONFIRMED')))
+      .orderBy(asc(schema.appointments.startTime));
     return rows.map((r) => ({
       appointmentId: r.id, dealershipId: r.dealershipId, customerId: r.customerId, vehicleVin: r.vehicleVin,
       serviceBayId: r.serviceBayId, technicianId: r.technicianId, serviceType: r.serviceType as ServiceType,

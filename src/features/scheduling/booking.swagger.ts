@@ -112,7 +112,7 @@ export const getVehicleAppointmentsSchema = {
   },
   response: {
     200: {
-      description: 'List of confirmed appointments for the vehicle',
+      description: 'Chronological list of confirmed appointments for the vehicle (empty array if none found)',
       type: 'array',
       items: {
         type: 'object',
@@ -131,12 +131,12 @@ export const getVehicleAppointmentsSchema = {
         },
       },
     },
-    404: {
-      description: 'Vehicle not found or no associated appointments',
+    500: {
+      description: 'Internal server error',
       type: 'object',
       properties: {
-        code: { type: 'string', example: 'NOT_FOUND' },
-        message: { type: 'string', example: 'No appointments found' },
+        code: { type: 'string', example: 'INTERNAL_ERROR' },
+        message: { type: 'string', example: 'Internal server error' },
       },
     },
   },

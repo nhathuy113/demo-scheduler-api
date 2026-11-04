@@ -109,6 +109,8 @@ export class InMemorySchedulingStorage implements ISchedulingStorage {
   }
 
   async getAppointmentsByVin(vehicleVin: string): Promise<readonly ConfirmedAppointment[]> {
-    return this.confirmedAppointments.filter((a) => a.vehicleVin === vehicleVin);
+    return this.confirmedAppointments
+      .filter((a) => a.vehicleVin === vehicleVin)
+      .sort((a, b) => new Date(a.startTime).getTime() - new Date(b.startTime).getTime());
   }
 }

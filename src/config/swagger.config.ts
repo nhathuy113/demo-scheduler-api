@@ -1,5 +1,6 @@
 import { SwaggerOptions } from '@fastify/swagger';
 import { FastifySwaggerUiOptions } from '@fastify/swagger-ui';
+import { env } from './env.js';
 
 export const swaggerOptions: SwaggerOptions = {
   openapi: {
@@ -20,7 +21,7 @@ export const swaggerOptions: SwaggerOptions = {
     },
     servers: [
       {
-        url: 'http://127.0.0.1:' + (process.env.PORT || '3000'),
+        url: `http://127.0.0.1:${env.PORT}`,
         description: 'Local Server',
       },
     ],

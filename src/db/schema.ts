@@ -1,5 +1,5 @@
 import { relations } from 'drizzle-orm';
-import { boolean, integer, pgTable, text, timestamp, varchar } from 'drizzle-orm/pg-core';
+import { boolean, index, integer, pgTable, text, timestamp, varchar } from 'drizzle-orm/pg-core';
 
 export const dealerships = pgTable('dealerships', {
   id: varchar('id', { length: 64 }).primaryKey(),
@@ -66,7 +66,9 @@ export const appointments = pgTable('appointments', {
   endTime: timestamp('end_time', { withTimezone: true }).notNull(),
   status: varchar('status', { length: 32 }).default('CONFIRMED').notNull(),
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
-});
+}, (table) => [
+  index('appointments_vehicle_vin_idx').on(table.vehicleVin, table.status),
+]);
 
 export const dealershipsRelations = relations(dealerships, ({ many }) => ({
   bays: many(serviceBays),
