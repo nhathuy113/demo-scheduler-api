@@ -15,6 +15,11 @@ Car dealership service departments operate under strict physical and technical r
 - 🚘 **Car Owner (B2C Touchpoint):** Self-service customer booking appointments online via web or mobile portal.
 - 📋 **Service Advisor (Internal Workshop Ops):** Dealership staff managing walk-in, phone-in, and scheduled repair workflows.
 
+### 💡 Client Recognition & Vehicle Identifier Philosophy
+> *"A good dealership remembers clients' tastes."*
+> As soon as you pick up a client's phone call, you should immediately know who that is, their `customerId`, and their `vehicleId`. 
+> Given the reality of diverse legacy DMS integrations, `vehicleId` in this scheduler demo is treated as a broad term (an inclusive, opaque identifier) rather than enforcing rigid format validation (such as strict 17-character ISO 3779 VIN rules).
+
 ### 🔧 Standard Services & Skill Certifications
 
 | Service Type (`serviceType`) | Duration | Required Skill Certification (`skillCode`) |
