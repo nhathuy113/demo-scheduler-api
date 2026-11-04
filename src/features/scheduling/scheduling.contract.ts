@@ -25,6 +25,18 @@ export interface TimeSlot {
   readonly endTime: Date;
 }
 
+export interface ListAvailsResponse {
+  readonly date: string;
+  readonly serviceType: string;
+  readonly durationMinutes: number;
+  readonly timeSlots: readonly ListAvailsTimeSlot[];
+}
+
+export interface ListAvailsTimeSlot {
+  readonly startTime: string;
+  readonly endTime: string;
+}
+
 export interface ServiceBay {
   readonly id: string;
 }
@@ -84,22 +96,51 @@ export interface ConfirmedAppointment {
   readonly createdAt: string;
 }
 
-export const AvailabilityQuerySchema = z.object({
-  dealershipId: z.string().min(1, 'Dealership ID is required'),
-  serviceType: z.nativeEnum(ServiceTypeEnum, {
-    errorMap: () => ({ message: 'Invalid service type' }),
-  }),
-  date: z
-    .string()
-    .regex(/^\d{4}-\d{2}-\d{2}$/, 'Date must be formatted as YYYY-MM-DD')
-    .refine((val) => isMatch(val, 'yyyy-MM-dd') && isValid(parseISO(`${val}T00:00:00.000Z`)), {
-      message: 'Date must be valid calendar date',
+export const AvailabilityQuerySchema = z
+  .object({
+    dealershipId: z.string().min(1, 'Dealership ID is required'),
+    serviceType: z.nativeEnum(ServiceTypeEnum, {
+      errorMap: () => ({ message: 'Invalid service type' }),
     }),
-  vehicleVin: z
-    .string()
-    .regex(/^[A-HJ-NPR-Z0-9]{17}$/, 'Invalid VIN format: must be 17 uppercase characters excluding I, O, Q')
-    .optional(),
-});
+    date: z
+      .string()
+      .regex(/^\d{4}-\d{2}-\d{2}$/, 'Date must be formatted as YYYY-MM-DD')
+      .refine((val) => {
+        const [y, m, d] = val.split('-').map(Number);
+        const date = new Date(Date.UTC(y, m - 1, d));
+        return (
+          isValid(date) &&
+          date.getUTCFullYear() === y &&
+          date.getUTCMonth() === m - 1 &&
+          date.getUTCDate() === d
+        );
+      }, { message: 'Date must be a valid calendar date' })
+      .refine((val) => {
+        const [y, m, d] = val.split('-').map(Number);
+        const selected = new Date(Date.UTC(y, m - 1, d));
+        const today = new Date();
+        const todayStart = new Date(Date.UTC(today.getUTCFullYear(), today.getUTCMonth(), today.getUTCDate()));
+        return selected >= todayStart;
+      }, { message: 'Date must be today or in the future' }),
+    vehicleVin: z
+      .string()
+      .regex(/^[A-HJ-NPR-Z0-9]{17}$/, 'Invalid VIN format: must be 17 uppercase characters excluding I, O, Q')
+      .optional(),
+  })
+  .superRefine((data, ctx) => {
+    if (data.vehicleVin) {
+      const today = new Date();
+      const todayStart = new Date(Date.UTC(today.getUTCFullYear(), today.getUTCMonth(), today.getUTCDate()));
+      const vinDate = new Date(`${data.date}T00:00:00.000Z`);
+      if (vinDate < todayStart) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ['vehicleVin'],
+          message: 'Vehicle VIN cannot be used for past dates',
+        });
+      }
+    }
+  });
 
 export type AvailabilityQuery = z.infer<typeof AvailabilityQuerySchema>;
 
